@@ -1,5 +1,6 @@
 export type Product = {
   id: string;
+  store_id: string;
   name: string;
   price: number;
   description: string | null;
@@ -12,8 +13,10 @@ export type Product = {
   created_at?: string;
 };
 
-export type StoreSettings = {
-  id: number;
+export type Store = {
+  id: string;
+  owner_id: string;
+  slug: string;
   name: string;
   description: string;
   whatsapp: string;
@@ -36,4 +39,13 @@ export function effectivePrice(p: Pick<Product, "price" | "oferta" | "discount_p
 
 export function fmt(n: number) {
   return (Number(n) || 0).toLocaleString("es-AR");
+}
+
+export function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 }
