@@ -1,17 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Loader2, Upload, X, Pencil, Trash2, Image as ImageIcon, LogOut } from "lucide-react";
+import { Loader2, Upload, X, Pencil, Trash2, Image as ImageIcon, LogOut, ExternalLink } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { Product, StoreSettings, FONT_OPTIONS, effectivePrice, fmt } from "@/lib/types";
+import { Product, Store, FONT_OPTIONS, effectivePrice, fmt, slugify } from "@/lib/types";
 
 const COLOR_PRESETS = ["#1F6F6F", "#8A3E5A", "#B5722A", "#3E5C9A", "#5C4A9A", "#2F5D3A", "#9A2E2E", "#2B2B2B"];
 
 export default function AdminPage() {
   const [session, setSession] = useState<any>(null);
   const [checking, setChecking] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -21,13 +18,6 @@ export default function AdminPage() {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => sub.subscription.unsubscribe();
   }, []);
-
-  async function login(e: React.FormEvent) {
-    e.preventDefault();
-    setAuthError("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setAuthError("Email o contraseña incorrectos.");
-  }
 
   if (checking) {
     return (
@@ -39,66 +29,76 @@ export default function AdminPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <form onSubmit={login} className="w-full max-w-sm bg-white border border-neutral-200 rounded-xl p-6 space-y-3">
-          <h1 className="text-lg font-semibold">Ingresar al panel</h1>
-          <p className="text-xs text-neutral-500">
-            Usá el email y contraseña del usuario que creaste en Supabase Authentication.
-          </p>
-          <input
-            type="email"
-            required
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-neutral-400"
-          />
-          <input
-            type="password"
-            required
-            placeholder="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-neutral-400"
-          />
-          {authError && <p className="text-xs text-red-500">{authError}</p>}
-          <button type="submit" className="w-full bg-neutral-900 text-white rounded-lg py-2 text-sm font-medium">
+      <div className="min-h-screen flex items-center justify-center px-4 text-center">
+        <div>
+          <p className="text-sm text-neutral-500 mb-3">Tenés que ingresar para ver tu panel.</p>
+          <a href="/login" className="bg-neutral-900 text-white rounded-lg px-4 py-2 text-sm font-medium">
             Ingresar
-          </button>
-        </form>
+          </a>
+        </div>
       </div>
     );
   }
 
-  return <AdminDashboard onLogout={() => supabase.auth.signOut()} />;
+  return <AdminDashboard userId={session.user.id} onLogout={() => supabase.auth.signOut()} />;
 }
 
-function AdminDashboard({ onLogout }: { onLogout: () => void }) {
+function AdminDashboard({ userId, onLogout }: { userId: string; onLogout: () => void }) {
   const [tab, setTab] = useState<"productos" | "personalizacion">("productos");
   const [products, setProducts] = useState<Product[]>([]);
-  const [settings, setSettings] = useState<StoreSettings | null>(null);
+  const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [creatingName, setCreatingName] = useState("");
+  const [creating, setCreating] = useState(false);
 
   async function loadAll() {
-    const [{ data: p }, { data: s }] = await Promise.all([
-      supabase.from("products").select("*").order("created_at", { ascending: false }),
-      supabase.from("store_settings").select("*").eq("id", 1).single(),
-    ]);
-    setProducts((p as Product[]) || []);
-    setSettings((s as StoreSettings) || null);
+    const { data: s } = await supabase.from("stores").select("*").eq("owner_id", userId).maybeSingle();
+    setStore((s as Store) || null);
+    if (s) {
+      const { data: p } = await supabase
+        .from("products")
+        .select("*")
+        .eq("store_id", (s as Store).id)
+        .order("created_at", { ascending: false });
+      setProducts((p as Product[]) || []);
+    }
     setLoading(false);
   }
 
   useEffect(() => {
     loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function saveSettings(patch: Partial<StoreSettings>) {
-    if (!settings) return;
-    const next = { ...settings, ...patch };
-    setSettings(next);
-    await supabase.from("store_settings").update(patch).eq("id", 1);
+  async function createStore(e: React.FormEvent) {
+    e.preventDefault();
+    if (!creatingName.trim()) return;
+    setCreating(true);
+    let baseSlug = slugify(creatingName) || "tienda";
+    let slug = baseSlug;
+    let n = 1;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { data: existing } = await supabase.from("stores").select("id").eq("slug", slug).maybeSingle();
+      if (!existing) break;
+      n += 1;
+      slug = `${baseSlug}-${n}`;
+    }
+    const { data, error } = await supabase
+      .from("stores")
+      .insert({ owner_id: userId, slug, name: creatingName })
+      .select()
+      .single();
+    setCreating(false);
+    if (!error) setStore(data as Store);
+  }
+
+  async function saveSettings(patch: Partial<Store>) {
+    if (!store) return;
+    const next = { ...store, ...patch };
+    setStore(next);
+    await supabase.from("stores").update(patch).eq("id", store.id);
   }
 
   async function uploadImage(file: File) {
@@ -115,7 +115,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setProducts((list) => list.filter((p) => p.id !== id));
   }
 
-  if (loading || !settings) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-neutral-400 gap-2">
         <Loader2 className="animate-spin" size={18} /> Cargando panel…
@@ -123,9 +123,34 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     );
   }
 
+  if (!store) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <form onSubmit={createStore} className="w-full max-w-sm bg-white border border-neutral-200 rounded-xl p-6 space-y-3">
+          <h1 className="text-lg font-semibold">Creá tu tienda</h1>
+          <p className="text-xs text-neutral-500">Elegí el nombre de tu emprendimiento para empezar.</p>
+          <input
+            required
+            placeholder="Nombre de tu emprendimiento"
+            value={creatingName}
+            onChange={(e) => setCreatingName(e.target.value)}
+            className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-neutral-400"
+          />
+          <button
+            type="submit"
+            disabled={creating}
+            className="w-full bg-neutral-900 text-white rounded-lg py-2 text-sm font-medium disabled:opacity-50"
+          >
+            {creating ? "Creando…" : "Crear tienda"}
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex gap-1 bg-neutral-100 rounded-full p-1 w-fit">
           {(["productos", "personalizacion"] as const).map((id) => (
             <button
@@ -142,24 +167,34 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </button>
       </div>
 
+      <a
+        href={`/tienda/${store.slug}`}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center gap-1.5 text-xs text-neutral-400 hover:text-neutral-700 mb-4"
+      >
+        Ver mi tienda pública <ExternalLink size={12} />
+      </a>
+
       {tab === "productos" ? (
         <ProductsTab
           products={products}
           setProducts={setProducts}
           editing={editing}
           setEditing={setEditing}
-          primary={settings.primary_color}
+          primary={store.primary_color}
+          storeId={store.id}
           uploadImage={uploadImage}
           deleteProduct={deleteProduct}
         />
       ) : (
-        <PersonalizationTab settings={settings} saveSettings={saveSettings} uploadImage={uploadImage} />
+        <PersonalizationTab store={store} saveSettings={saveSettings} uploadImage={uploadImage} />
       )}
     </div>
   );
 }
 
-function ProductsTab({ products, setProducts, editing, setEditing, primary, uploadImage, deleteProduct }: any) {
+function ProductsTab({ products, setProducts, editing, setEditing, primary, storeId, uploadImage, deleteProduct }: any) {
   const blank = {
     id: "",
     name: "",
@@ -186,6 +221,7 @@ function ProductsTab({ products, setProducts, editing, setEditing, primary, uplo
         discount_pct: String(editing.discount_pct || ""),
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing]);
 
   async function handleImages(e: React.ChangeEvent<HTMLInputElement>) {
@@ -207,6 +243,7 @@ function ProductsTab({ products, setProducts, editing, setEditing, primary, uplo
     if (!form.name.trim() || !form.price) return;
     setSaving(true);
     const payload = {
+      store_id: storeId,
       name: form.name,
       price: Number(form.price) || 0,
       description: form.description || null,
@@ -325,28 +362,32 @@ function ProductsTab({ products, setProducts, editing, setEditing, primary, uplo
   );
 }
 
-function PersonalizationTab({ settings, saveSettings, uploadImage }: any) {
-  const [local, setLocal] = useState(settings);
+function PersonalizationTab({ store, saveSettings, uploadImage }: any) {
+  const [local, setLocal] = useState(store);
 
   async function handleLogo(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
       const url = await uploadImage(file);
-      setLocal((s: StoreSettings) => ({ ...s, logo_url: url }));
+      setLocal((s: Store) => ({ ...s, logo_url: url }));
       saveSettings({ logo_url: url });
     } catch (err) {
       alert("No se pudo subir el logo.");
     }
   }
 
-  function commit(patch: Partial<StoreSettings>) {
-    setLocal((s: StoreSettings) => ({ ...s, ...patch }));
+  function commit(patch: Partial<Store>) {
+    setLocal((s: Store) => ({ ...s, ...patch }));
     saveSettings(patch);
   }
 
   return (
     <div className="max-w-md space-y-5 bg-white border border-neutral-200 rounded-xl p-5">
+      <div>
+        <label className="block text-xs text-neutral-500 mb-1">Link de tu tienda</label>
+        <p className="text-sm text-neutral-700 break-all">/tienda/{local.slug}</p>
+      </div>
       <div>
         <label className="block text-xs text-neutral-500 mb-1">Logo</label>
         <div className="flex items-center gap-3">
@@ -367,7 +408,7 @@ function PersonalizationTab({ settings, saveSettings, uploadImage }: any) {
         <label className="block text-xs text-neutral-500 mb-1">Nombre del emprendimiento</label>
         <input
           value={local.name}
-          onChange={(e) => setLocal((s: StoreSettings) => ({ ...s, name: e.target.value }))}
+          onChange={(e) => setLocal((s: Store) => ({ ...s, name: e.target.value }))}
           onBlur={(e) => commit({ name: e.target.value })}
           className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-neutral-400"
         />
@@ -376,7 +417,7 @@ function PersonalizationTab({ settings, saveSettings, uploadImage }: any) {
         <label className="block text-xs text-neutral-500 mb-1">Descripción corta</label>
         <input
           value={local.description}
-          onChange={(e) => setLocal((s: StoreSettings) => ({ ...s, description: e.target.value }))}
+          onChange={(e) => setLocal((s: Store) => ({ ...s, description: e.target.value }))}
           onBlur={(e) => commit({ description: e.target.value })}
           className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-neutral-400"
         />
@@ -385,7 +426,7 @@ function PersonalizationTab({ settings, saveSettings, uploadImage }: any) {
         <label className="block text-xs text-neutral-500 mb-1">WhatsApp (con código de país, solo números)</label>
         <input
           value={local.whatsapp}
-          onChange={(e) => setLocal((s: StoreSettings) => ({ ...s, whatsapp: e.target.value }))}
+          onChange={(e) => setLocal((s: Store) => ({ ...s, whatsapp: e.target.value }))}
           onBlur={(e) => commit({ whatsapp: e.target.value })}
           placeholder="5492235551234"
           className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-neutral-400"
