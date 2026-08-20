@@ -23,7 +23,19 @@ export type Store = {
   primary_color: string;
   font_id: string;
   logo_url: string | null;
+  created_at?: string;
+  is_paid?: boolean;
 };
+
+export function trialExpired(store: Pick<Store, "created_at" | "is_paid">) {
+  if (store.is_paid) return false;
+  if (!store.created_at) return false;
+  const created = new Date(store.created_at).getTime();
+  const now = Date.now();
+  const sevenDays = 7 * 24 * 60 * 60 * 1000;
+  return now - created > sevenDays;
+}
+
 
 export const FONT_OPTIONS = [
   { id: "serif", label: "Editorial", heading: "Georgia, 'Times New Roman', serif", body: "'Helvetica Neue', Arial, sans-serif" },
