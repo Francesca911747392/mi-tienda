@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, Upload, X, Pencil, Trash2, Image as ImageIcon, LogOut, ExternalLink } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { Product, Store, FONT_OPTIONS, effectivePrice, fmt, slugify } from "@/lib/types";
+import { Product, Store, FONT_OPTIONS, effectivePrice, fmt, slugify, trialExpired } from "@/lib/types";
 
 const COLOR_PRESETS = ["#1F6F6F", "#8A3E5A", "#B5722A", "#3E5C9A", "#5C4A9A", "#2F5D3A", "#9A2E2E", "#2B2B2B"];
 
@@ -119,6 +119,27 @@ function AdminDashboard({ userId, onLogout }: { userId: string; onLogout: () => 
     return (
       <div className="min-h-screen flex items-center justify-center text-neutral-400 gap-2">
         <Loader2 className="animate-spin" size={18} /> Cargando panel…
+      </div>
+    );
+  }
+
+  if (store && trialExpired(store)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="w-full max-w-sm bg-white border border-neutral-200 rounded-xl p-6 space-y-3 text-center">
+          <h1 className="text-lg font-semibold">Se venció tu prueba gratis</h1>
+          <p className="text-sm text-neutral-500">
+            Ya pasaron los 7 días de prueba. Suscribite por $3.000/mes para seguir usando tu tienda.
+          </p>
+          <a
+            href="https://mpago.la/2RrFq22"
+            target="_blank"
+            rel="noreferrer"
+            className="block w-full bg-neutral-900 text-white rounded-lg py-2 text-sm font-medium"
+          >
+            Suscribirme por $3.000/mes
+          </a>
+        </div>
       </div>
     );
   }
