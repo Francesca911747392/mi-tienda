@@ -3,7 +3,8 @@ import type { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (pathname.startsWith("/invitacion") || pathname.startsWith("/_next") || pathname.startsWith("/api")) {
+  if (pathname.startsWith("/invitacion") || pathname.startsWith("/_next") || pathname.startsWith("/api") || pathname.startsWith("/tienda")) {
+
     return NextResponse.next();
   }
   const ok = req.cookies.get("acceso_ok")?.value === "1";
