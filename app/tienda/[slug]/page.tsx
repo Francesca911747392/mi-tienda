@@ -6,7 +6,8 @@ import {
   Image as ImageIcon, ChevronLeft, ChevronRight, Loader2, Check,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { Product, Store, FONT_OPTIONS, effectivePrice, fmt } from "@/lib/types";
+import { Product, Store, FONT_OPTIONS, effectivePrice, fmt, trialExpired } from "@/lib/types";
+
 import ProductCard from "@/components/ProductCard";
 import CartDrawer, { CartLine } from "@/components/CartDrawer";
 
@@ -128,13 +129,25 @@ export default function TiendaPage() {
     );
   }
 
-  if (notFound || !store) {
+    if (notFound || !store) {
     return (
       <div className="min-h-screen flex items-center justify-center text-neutral-400 text-sm px-6 text-center">
         No encontramos esta tienda.
       </div>
     );
   }
+
+  if (trialExpired(store)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 text-center">
+        <div>
+          <p className="text-red-500 font-semibold text-lg mb-2">Esta tienda no está disponible</p>
+          <p className="text-sm text-neutral-500">El dueño todavía no activó su suscripción.</p>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div style={{ fontFamily: font.body }}>
