@@ -454,6 +454,26 @@ function PersonalizationTab({ store, saveSettings, uploadImage }: any) {
         />
       </div>
       <div>
+        <label className="block text-xs text-neutral-500 mb-1">Instagram (usuario, sin @)</label>
+        <input
+          value={local.instagram_url || ""}
+          onChange={(e) => setLocal((s: Store) => ({ ...s, instagram_url: e.target.value }))}
+          onBlur={(e) => commit({ instagram_url: e.target.value })}
+          placeholder="mi_emprendimiento"
+          className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-neutral-400"
+        />
+      </div>
+      <div>
+        <label className="block text-xs text-neutral-500 mb-1">TikTok (usuario, sin @)</label>
+        <input
+          value={local.tiktok_url || ""}
+          onChange={(e) => setLocal((s: Store) => ({ ...s, tiktok_url: e.target.value }))}
+          onBlur={(e) => commit({ tiktok_url: e.target.value })}
+          placeholder="mi_emprendimiento"
+          className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-neutral-400"
+        />
+      </div>
+      <div>
         <label className="block text-xs text-neutral-500 mb-1">Color principal</label>
         <div className="flex items-center gap-2 flex-wrap">
           {COLOR_PRESETS.map((c) => (
