@@ -27,6 +27,8 @@ export type Store = {
   is_paid?: boolean;
   instagram_url?: string | null;
   tiktok_url?: string | null;
+  about_text?: string | null;
+  about_image_url?: string | null;
 };
 
 export function trialExpired(store: Pick<Store, "created_at" | "is_paid">) {
