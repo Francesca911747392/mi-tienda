@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import {
   Search, X, ShoppingCart, MessageCircle, Store as StoreIcon, Sparkles,
-  Image as ImageIcon, ChevronLeft, ChevronRight, Loader2, Check, Menu,
+  Image as ImageIcon, ChevronLeft, ChevronRight, Loader2, Check, Menu, Instagram, Music2,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Product, Store, FONT_OPTIONS, effectivePrice, fmt, trialExpired } from "@/lib/types";
@@ -381,6 +381,30 @@ export default function TiendaPage() {
                 </a>
               )}
             </nav>
+            {(store.instagram_url || store.tiktok_url) && (
+              <div className="flex gap-3 mt-8">
+                {store.instagram_url && (
+                  <a
+                    href={`https://instagram.com/${store.instagram_url.replace(/^@/, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center hover:border-white"
+                  >
+                    <Instagram size={16} />
+                  </a>
+                )}
+                {store.tiktok_url && (
+                  <a
+                    href={`https://tiktok.com/@${store.tiktok_url.replace(/^@/, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center hover:border-white"
+                  >
+                    <Music2 size={16} />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -412,6 +436,30 @@ export default function TiendaPage() {
             </a>
           )}
         </div>
+        {(store.instagram_url || store.tiktok_url) && (
+          <div className="flex justify-center gap-3 mb-6">
+            {store.instagram_url && (
+              <a
+                href={`https://instagram.com/${store.instagram_url.replace(/^@/, "")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-9 h-9 rounded-full border border-neutral-600 flex items-center justify-center hover:border-white hover:text-white"
+              >
+                <Instagram size={16} />
+              </a>
+            )}
+            {store.tiktok_url && (
+              <a
+                href={`https://tiktok.com/@${store.tiktok_url.replace(/^@/, "")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-9 h-9 rounded-full border border-neutral-600 flex items-center justify-center hover:border-white hover:text-white"
+              >
+                <Music2 size={16} />
+              </a>
+            )}
+          </div>
+        )}
         <p className="text-xs opacity-70">
           {store.name} — {new Date().getFullYear()}. Todos los derechos reservados.
         </p>
