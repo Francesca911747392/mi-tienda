@@ -25,6 +25,8 @@ export type Store = {
   logo_url: string | null;
   created_at?: string;
   is_paid?: boolean;
+  instagram_url?: string | null;
+  tiktok_url?: string | null;
 };
 
 export function trialExpired(store: Pick<Store, "created_at" | "is_paid">) {
@@ -35,7 +37,6 @@ export function trialExpired(store: Pick<Store, "created_at" | "is_paid">) {
   const sevenDays = 7 * 24 * 60 * 60 * 1000;
   return now - created > sevenDays;
 }
-
 
 export const FONT_OPTIONS = [
   { id: "serif", label: "Editorial", heading: "Georgia, 'Times New Roman', serif", body: "'Helvetica Neue', Arial, sans-serif" },
