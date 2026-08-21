@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Product, Store, FONT_OPTIONS, effectivePrice, fmt, trialExpired } from "@/lib/types";
-
 import ProductCard from "@/components/ProductCard";
 import CartDrawer, { CartLine } from "@/components/CartDrawer";
 
@@ -129,7 +128,7 @@ export default function TiendaPage() {
     );
   }
 
-    if (notFound || !store) {
+  if (notFound || !store) {
     return (
       <div className="min-h-screen flex items-center justify-center text-neutral-400 text-sm px-6 text-center">
         No encontramos esta tienda.
@@ -147,7 +146,6 @@ export default function TiendaPage() {
       </div>
     );
   }
-
 
   return (
     <div style={{ fontFamily: font.body }}>
