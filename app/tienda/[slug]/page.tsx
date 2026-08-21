@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import {
   Search, X, ShoppingCart, MessageCircle, Store as StoreIcon, Sparkles,
   Image as ImageIcon, ChevronLeft, ChevronRight, Loader2, Check, Menu, Instagram, Music2,
@@ -370,6 +371,13 @@ export default function TiendaPage() {
                     {c}
                   </button>
                 ))}
+              <Link
+                href={`/tienda/${slug}/quienes-somos`}
+                className="block hover:opacity-70"
+                onClick={() => setMenuOpen(false)}
+              >
+                Quiénes Somos
+              </Link>
               {store.whatsapp && (
                 <a
                   href={`https://wa.me/${store.whatsapp.replace(/\D/g, "")}`}
@@ -425,6 +433,9 @@ export default function TiendaPage() {
                 {c}
               </button>
             ))}
+          <Link href={`/tienda/${slug}/quienes-somos`} className="hover:text-white">
+            Quiénes Somos
+          </Link>
           {store.whatsapp && (
             <a
               href={`https://wa.me/${store.whatsapp.replace(/\D/g, "")}`}
