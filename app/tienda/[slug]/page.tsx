@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import {
   Search, X, ShoppingCart, MessageCircle, Store as StoreIcon, Sparkles,
-  Image as ImageIcon, ChevronLeft, ChevronRight, Loader2, Check,
+  Image as ImageIcon, ChevronLeft, ChevronRight, Loader2, Check, Menu,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Product, Store, FONT_OPTIONS, effectivePrice, fmt, trialExpired } from "@/lib/types";
@@ -24,6 +24,7 @@ export default function TiendaPage() {
   const [category, setCategory] = useState("Todas");
   const [cart, setCart] = useState<CartState>({});
   const [cartOpen, setCartOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [detail, setDetail] = useState<Product | null>(null);
   const [detailIdx, setDetailIdx] = useState(0);
   const [toasts, setToasts] = useState<{ id: string; message: string }[]>([]);
@@ -149,7 +150,14 @@ export default function TiendaPage() {
 
   return (
     <div style={{ fontFamily: font.body }}>
-      <div className="px-6 py-12 text-center" style={{ background: `${primary}14` }}>
+      <div className="relative px-6 py-12 text-center" style={{ background: `${primary}14` }}>
+        <button
+          onClick={() => setMenuOpen(true)}
+          className="absolute top-4 left-4 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center text-neutral-600 hover:text-neutral-900"
+          aria-label="Menú"
+        >
+          <Menu size={18} />
+        </button>
         <div className="w-16 h-16 rounded-full mx-auto mb-3 overflow-hidden bg-white shadow flex items-center justify-center">
           {store.logo_url ? (
             <img src={store.logo_url} alt="logo" className="w-full h-full object-cover" />
@@ -318,6 +326,96 @@ export default function TiendaPage() {
           </div>
         </div>
       )}
+
+      {menuOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setMenuOpen(false)} />
+          <div className="relative w-full max-w-xs bg-black text-white h-full shadow-2xl flex flex-col p-5">
+            <button
+              onClick={() => setMenuOpen(false)}
+              className="self-end text-neutral-400 hover:text-white mb-4"
+            >
+              <X size={20} />
+            </button>
+            <div className="relative mb-6">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar productos…"
+                className="w-full bg-neutral-900 border border-neutral-700 rounded-full pl-8 pr-3 py-2 text-sm outline-none text-white placeholder:text-neutral-500"
+              />
+            </div>
+            <nav className="space-y-4 text-sm">
+              <button
+                onClick={() => {
+                  setCategory("Todas");
+                  setMenuOpen(false);
+                }}
+                className="block text-left w-full hover:opacity-70"
+              >
+                Inicio
+              </button>
+              {categories
+                .filter((c) => c !== "Todas")
+                .map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => {
+                      setCategory(c);
+                      setMenuOpen(false);
+                    }}
+                    className="block text-left w-full hover:opacity-70"
+                  >
+                    {c}
+                  </button>
+                ))}
+              {store.whatsapp && (
+                <a
+                  href={`https://wa.me/${store.whatsapp.replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block hover:opacity-70"
+                >
+                  Contacto
+                </a>
+              )}
+            </nav>
+          </div>
+        </div>
+      )}
+
+      <footer className="mt-10 py-10 px-6 text-center text-sm" style={{ background: "#1c1c1c", color: "#c9c9c9" }}>
+        {store.logo_url && (
+          <img src={store.logo_url} alt={store.name} className="w-10 h-10 rounded-full object-cover mx-auto mb-4" />
+        )}
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6">
+          <button onClick={() => setCategory("Todas")} className="hover:text-white">
+            Inicio
+          </button>
+          {categories
+            .filter((c) => c !== "Todas")
+            .slice(0, 4)
+            .map((c) => (
+              <button key={c} onClick={() => setCategory(c)} className="hover:text-white">
+                {c}
+              </button>
+            ))}
+          {store.whatsapp && (
+            <a
+              href={`https://wa.me/${store.whatsapp.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-white"
+            >
+              Contacto
+            </a>
+          )}
+        </div>
+        <p className="text-xs opacity-70">
+          {store.name} — {new Date().getFullYear()}. Todos los derechos reservados.
+        </p>
+      </footer>
 
       <div className="fixed top-4 right-4 z-50 space-y-2">
         {toasts.map((t) => (
