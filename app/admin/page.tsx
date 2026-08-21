@@ -398,6 +398,18 @@ function PersonalizationTab({ store, saveSettings, uploadImage }: any) {
     }
   }
 
+  async function handleAboutImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await uploadImage(file);
+      setLocal((s: Store) => ({ ...s, about_image_url: url }));
+      saveSettings({ about_image_url: url });
+    } catch (err) {
+      alert("No se pudo subir la imagen.");
+    }
+  }
+
   function commit(patch: Partial<Store>) {
     setLocal((s: Store) => ({ ...s, ...patch }));
     saveSettings(patch);
@@ -471,6 +483,33 @@ function PersonalizationTab({ store, saveSettings, uploadImage }: any) {
           onBlur={(e) => commit({ tiktok_url: e.target.value })}
           placeholder="mi_emprendimiento"
           className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-neutral-400"
+        />
+      </div>
+      <div>
+        <label className="block text-xs text-neutral-500 mb-1">Foto para "Quiénes somos"</label>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-lg bg-neutral-100 overflow-hidden flex items-center justify-center">
+            {local.about_image_url ? (
+              <img src={local.about_image_url} className="w-full h-full object-cover" alt="" />
+            ) : (
+              <ImageIcon size={16} className="text-neutral-300" />
+            )}
+          </div>
+          <label className="text-xs border border-neutral-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-neutral-50">
+            Subir imagen
+            <input type="file" accept="image/*" onChange={handleAboutImage} className="hidden" />
+          </label>
+        </div>
+      </div>
+      <div>
+        <label className="block text-xs text-neutral-500 mb-1">Texto de "Quiénes somos"</label>
+        <textarea
+          value={local.about_text || ""}
+          onChange={(e) => setLocal((s: Store) => ({ ...s, about_text: e.target.value }))}
+          onBlur={(e) => commit({ about_text: e.target.value })}
+          rows={4}
+          placeholder="Contá quién sos, desde cuándo vendés, qué hace especial a tu emprendimiento…"
+          className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-neutral-400 resize-none"
         />
       </div>
       <div>
