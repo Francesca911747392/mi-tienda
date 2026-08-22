@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   Search, X, ShoppingCart, MessageCircle, Store as StoreIcon, Sparkles,
-  Image as ImageIcon, ChevronLeft, ChevronRight, Loader2, Check, Menu, Instagram, Music2,
+  Image as ImageIcon, ChevronLeft, ChevronRight, Loader2, Check, Menu, Instagram, Music2, ChevronDown,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Product, Store, FONT_OPTIONS, effectivePrice, fmt, trialExpired } from "@/lib/types";
@@ -26,6 +26,7 @@ export default function TiendaPage() {
   const [cart, setCart] = useState<CartState>({});
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [productsOpen, setProductsOpen] = useState(false);
   const [detail, setDetail] = useState<Product | null>(null);
   const [detailIdx, setDetailIdx] = useState(0);
   const [toasts, setToasts] = useState<{ id: string; message: string }[]>([]);
@@ -357,20 +358,39 @@ export default function TiendaPage() {
               >
                 Inicio
               </button>
-              {categories
-                .filter((c) => c !== "Todas")
-                .map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => {
-                      setCategory(c);
-                      setMenuOpen(false);
-                    }}
-                    className="block text-left w-full hover:opacity-70"
-                  >
-                    {c}
-                  </button>
-                ))}
+              <div>
+                <button
+                  onClick={() => setProductsOpen((v) => !v)}
+                  className="flex items-center justify-between w-full hover:opacity-70"
+                >
+                  Productos
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform ${productsOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {productsOpen && (
+                  <div className="mt-3 ml-3 space-y-3 border-l border-neutral-700 pl-3">
+                    {categories
+                      .filter((c) => c !== "Todas")
+                      .map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => {
+                            setCategory(c);
+                            setMenuOpen(false);
+                          }}
+                          className="block text-left w-full text-neutral-300 hover:text-white"
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    {categories.filter((c) => c !== "Todas").length === 0 && (
+                      <p className="text-neutral-500 text-xs">Sin categorías todavía.</p>
+                    )}
+                  </div>
+                )}
+              </div>
               <Link
                 href={`/tienda/${slug}/quienes-somos`}
                 className="block hover:opacity-70"
